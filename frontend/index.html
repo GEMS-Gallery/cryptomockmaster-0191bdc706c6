@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Trading Mockup</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script type="module">
+        import { AuthClient } from "@dfinity/auth-client";
+        window.AuthClient = AuthClient;
+    </script>
     <style>
         body, html {
             margin: 0;
@@ -163,6 +167,56 @@
             font-size: 0.9rem;
             margin-bottom: 0.5rem;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #1F2937;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #374151;
+            width: 300px;
+            border-radius: 0.5rem;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: #D1D5DB;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .wallet-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .wallet-list li {
+            margin-bottom: 10px;
+        }
+        .wallet-list button {
+            width: 100%;
+            padding: 10px;
+            background-color: #374151;
+            color: #D1D5DB;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        .wallet-list button:hover {
+            background-color: #4B5563;
+        }
     </style>
 </head>
 <body>
@@ -172,7 +226,7 @@
                 <span style="font-weight: bold;">Josh Exchange</span>
                 <span style="margin-left: 1rem;">ICP ▼</span>
             </div>
-            <button class="select-wallet">Select Wallet</button>
+            <button class="select-wallet" id="selectWalletBtn">Select Wallet</button>
         </header>
         <main>
             <div class="chart-container">
@@ -266,6 +320,20 @@
             </div>
         </main>
     </div>
+
+    <!-- Wallet Selection Modal -->
+    <div id="walletModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Select Wallet</h2>
+            <ul class="wallet-list">
+                <li><button id="internetIdentityBtn">Internet Identity</button></li>
+                <li><button id="plugWalletBtn">Plug Wallet</button></li>
+                <li><button id="stoicWalletBtn">Stoic Wallet</button></li>
+            </ul>
+        </div>
+    </div>
+
     <script>
         let chart;
         const API_BASE_URL = 'https://api.coingecko.com/api/v3';
@@ -275,6 +343,7 @@
         let isMarketOrder = true;
         let leverage = 1;
         let availableBalance = 1030.4007;
+        let authClient;
 
         async function fetchICPPrice(vsCurrency = 'usd') {
             const url = `${API_BASE_URL}/simple/price?ids=${ICP_ID}&vs_currencies=${vsCurrency}`;
@@ -471,6 +540,29 @@
             alert(message);
         }
 
+        // Wallet connection functions
+        async function connectInternetIdentity() {
+            authClient = await AuthClient.create();
+            await authClient.login({
+                identityProvider: "https://identity.ic0.app/#authorize",
+                onSuccess: () => {
+                    alert("Connected to Internet Identity");
+                    document.getElementById('walletModal').style.display = 'none';
+                    document.getElementById('selectWalletBtn').textContent = 'Connected';
+                }
+            });
+        }
+
+        function connectPlugWallet() {
+            // Placeholder for Plug Wallet connection
+            alert("Plug Wallet connection not implemented yet");
+        }
+
+        function connectStoicWallet() {
+            // Placeholder for Stoic Wallet connection
+            alert("Stoic Wallet connection not implemented yet");
+        }
+
         document.querySelectorAll('.timeframe-buttons button').forEach(btn => {
             btn.addEventListener('click', function() {
                 const timeframe = this.id;
@@ -540,6 +632,29 @@
                 displayOrderbook(null); // Display error message
             }
         }
+
+        // Wallet modal functionality
+        const modal = document.getElementById("walletModal");
+        const selectWalletBtn = document.getElementById("selectWalletBtn");
+        const span = document.getElementsByClassName("close")[0];
+
+        selectWalletBtn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        document.getElementById('internetIdentityBtn').addEventListener('click', connectInternetIdentity);
+        document.getElementById('plugWalletBtn').addEventListener('click', connectPlugWallet);
+        document.getElementById('stoicWalletBtn').addEventListener('click', connectStoicWallet);
 
         // Initialize with 30d timeframe, update price info and orderbook
         updateChart(30);
