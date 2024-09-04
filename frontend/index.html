@@ -218,10 +218,10 @@
                     </div>
                     <input type="number" id="trade-amount" placeholder="0.00">
                     <div class="percentage-buttons">
-                        <button>10%</button>
-                        <button>25%</button>
-                        <button>50%</button>
-                        <button>75%</button>
+                        <button id="percent-10">10%</button>
+                        <button id="percent-25">25%</button>
+                        <button id="percent-50">50%</button>
+                        <button id="percent-75">75%</button>
                     </div>
                     <div style="font-size: 0.75rem; margin-bottom: 0.5rem;">
                         <div style="display: flex; justify-content: space-between;">
@@ -252,7 +252,7 @@
                         </div>
                         <div>
                             <span>Available Balance</span>
-                            <span>1,030.4007 USDT</span>
+                            <span id="available-balance">1,030.4007 USDT</span>
                         </div>
                     </div>
                 </div>
@@ -266,6 +266,7 @@
         let currentPrice = 0;
         let isMarketOrder = true;
         let leverage = 1;
+        let availableBalance = 1030.4007;
 
         async function fetchICPPrice(vsCurrency = 'usd') {
             const url = `${API_BASE_URL}/simple/price?ids=${ICP_ID}&vs_currencies=${vsCurrency}`;
@@ -418,6 +419,7 @@
                 currentPrice = icpData.currentPrice;
                 const priceInfo = document.getElementById('price-info');
                 priceInfo.textContent = `$${icpData.currentPrice.toFixed(2)} (${icpData.priceChange24h.toFixed(2)}%)`;
+                updateTradeInfo();
             }
         }
 
@@ -435,6 +437,13 @@
             const cost = value / leverage;
             document.getElementById('trade-value').textContent = `${value.toFixed(2)} USDT`;
             document.getElementById('trade-cost').textContent = `${cost.toFixed(2)} USDT`;
+        }
+
+        function setTradeAmount(percentage) {
+            const maxAmount = availableBalance * leverage / currentPrice;
+            const amount = maxAmount * (percentage / 100);
+            document.getElementById('trade-amount').value = amount.toFixed(4);
+            updateTradeInfo();
         }
 
         async function placeTrade(isBuy) {
@@ -490,6 +499,13 @@
 
         document.getElementById('buy-btn').addEventListener('click', () => placeTrade(true));
         document.getElementById('sell-btn').addEventListener('click', () => placeTrade(false));
+
+        document.querySelectorAll('.percentage-buttons button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const percentage = parseInt(this.id.split('-')[1]);
+                setTradeAmount(percentage);
+            });
+        });
 
         // Screenshot functionality
         document.getElementById('screenshot-btn').addEventListener('click', function() {
