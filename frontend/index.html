@@ -159,6 +159,10 @@
             justify-content: space-between;
             margin-bottom: 0.25rem;
         }
+        .price-info {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -208,6 +212,10 @@
                 </div>
                 <div class="trade-section">
                     <h3 style="margin-top: 0;">Trade</h3>
+                    <div class="price-info">
+                        <div>Market Price: <span id="market-price">--</span></div>
+                        <div>Limit Price: <span id="limit-price">--</span></div>
+                    </div>
                     <div class="trade-type">
                         <button id="cross-btn" class="active">Cross</button>
                         <button id="leverage-btn">10.00x</button>
@@ -264,6 +272,7 @@
         const API_BASE_URL = 'https://api.coingecko.com/api/v3';
         const ICP_ID = 'internet-computer';
         let currentPrice = 0;
+        let limitPrice = 0;
         let isMarketOrder = true;
         let leverage = 1;
         let availableBalance = 1030.4007;
@@ -417,8 +426,11 @@
             const icpData = await fetchICPData();
             if (icpData) {
                 currentPrice = icpData.currentPrice;
+                limitPrice = currentPrice * 1.001; // Simulated limit price (0.1% above market price)
                 const priceInfo = document.getElementById('price-info');
                 priceInfo.textContent = `$${icpData.currentPrice.toFixed(2)} (${icpData.priceChange24h.toFixed(2)}%)`;
+                document.getElementById('market-price').textContent = `$${currentPrice.toFixed(4)}`;
+                document.getElementById('limit-price').textContent = `$${limitPrice.toFixed(4)}`;
                 updateTradeInfo();
             }
         }
@@ -433,7 +445,8 @@
 
         function updateTradeInfo() {
             const amount = parseFloat(document.getElementById('trade-amount').value) || 0;
-            const value = amount * currentPrice;
+            const price = isMarketOrder ? currentPrice : limitPrice;
+            const value = amount * price;
             const cost = value / leverage;
             document.getElementById('trade-value').textContent = `${value.toFixed(2)} USDT`;
             document.getElementById('trade-cost').textContent = `${cost.toFixed(2)} USDT`;
@@ -453,8 +466,9 @@
                 return;
             }
             const orderType = isMarketOrder ? 'market' : 'limit';
+            const price = isMarketOrder ? currentPrice : limitPrice;
             const leverageText = leverage > 1 ? ` with ${leverage}x leverage` : '';
-            const message = `${isBuy ? 'Buy' : 'Sell'} ${orderType} order placed successfully for ${amount} ICP at $${currentPrice.toFixed(2)}${leverageText}`;
+            const message = `${isBuy ? 'Buy' : 'Sell'} ${orderType} order placed successfully for ${amount} ICP at $${price.toFixed(2)}${leverageText}`;
             alert(message);
         }
 
@@ -487,12 +501,14 @@
             this.classList.add('active');
             document.getElementById('market-btn').classList.remove('active');
             isMarketOrder = false;
+            updateTradeInfo();
         });
 
         document.getElementById('market-btn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('limit-btn').classList.remove('active');
             isMarketOrder = true;
+            updateTradeInfo();
         });
 
         document.getElementById('trade-amount').addEventListener('input', updateTradeInfo);
