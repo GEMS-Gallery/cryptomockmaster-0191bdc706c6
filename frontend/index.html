@@ -217,6 +217,13 @@
         .wallet-list button:hover {
             background-color: #4B5563;
         }
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .user-info span {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -226,7 +233,11 @@
                 <span style="font-weight: bold;">Josh Exchange</span>
                 <span style="margin-left: 1rem;">ICP ▼</span>
             </div>
-            <button class="select-wallet" id="selectWalletBtn">Select Wallet</button>
+            <div class="user-info">
+                <span id="userPrincipal" style="display: none;"></span>
+                <button id="selectWalletBtn" class="select-wallet">Select Wallet</button>
+                <button id="logoutBtn" style="display: none;" class="select-wallet">Logout</button>
+            </div>
         </header>
         <main>
             <div class="chart-container">
@@ -546,9 +557,8 @@
             await authClient.login({
                 identityProvider: "https://identity.ic0.app/#authorize",
                 onSuccess: () => {
-                    alert("Connected to Internet Identity");
+                    updateLoginStatus();
                     document.getElementById('walletModal').style.display = 'none';
-                    document.getElementById('selectWalletBtn').textContent = 'Connected';
                 }
             });
         }
@@ -561,6 +571,31 @@
         function connectStoicWallet() {
             // Placeholder for Stoic Wallet connection
             alert("Stoic Wallet connection not implemented yet");
+        }
+
+        async function updateLoginStatus() {
+            const isAuthenticated = await authClient.isAuthenticated();
+            const selectWalletBtn = document.getElementById('selectWalletBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userPrincipal = document.getElementById('userPrincipal');
+
+            if (isAuthenticated) {
+                const identity = await authClient.getIdentity();
+                const principal = identity.getPrincipal().toString();
+                userPrincipal.textContent = `Connected: ${principal.slice(0, 5)}...${principal.slice(-5)}`;
+                userPrincipal.style.display = 'inline';
+                selectWalletBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline';
+            } else {
+                userPrincipal.style.display = 'none';
+                selectWalletBtn.style.display = 'inline';
+                logoutBtn.style.display = 'none';
+            }
+        }
+
+        async function logout() {
+            await authClient.logout();
+            updateLoginStatus();
         }
 
         document.querySelectorAll('.timeframe-buttons button').forEach(btn => {
@@ -594,8 +629,7 @@
             isMarketOrder = false;
             updateTradeInfo();
         });
-
-        document.getElementById('market-btn').addEventListener('click', function() {
+document.getElementById('market-btn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('limit-btn').classList.remove('active');
             isMarketOrder = true;
@@ -655,11 +689,13 @@
         document.getElementById('internetIdentityBtn').addEventListener('click', connectInternetIdentity);
         document.getElementById('plugWalletBtn').addEventListener('click', connectPlugWallet);
         document.getElementById('stoicWalletBtn').addEventListener('click', connectStoicWallet);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
 
         // Initialize with 30d timeframe, update price info and orderbook
         updateChart(30);
         updatePriceInfo();
         updateOrderbook();
+        updateLoginStatus();
 
         // Set up periodic updates
         setInterval(updatePriceInfo, 60000); // Update price every minute
