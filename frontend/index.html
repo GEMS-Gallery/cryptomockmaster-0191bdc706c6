@@ -175,13 +175,13 @@
                 <div class="chart-header">
                     <div>
                         <span style="color: #34D399;">•</span>
-                        <span style="font-weight: bold;">ICP / TetherUS : 1h : Binance</span>
+                        <span style="font-weight: bold;">ICP / TetherUS : <span id="current-timeframe">1h</span> : Binance</span>
                         <span style="margin-left: 0.5rem;">O 3.4507 H 3.4507 L 3.3333 C 3.3362 -0.0045 (-0.34%)</span>
                     </div>
                     <div class="timeframe-buttons">
-                        <button>1m</button>
-                        <button>30m</button>
-                        <button class="active">1h</button>
+                        <button id="1m">1m</button>
+                        <button id="30m">30m</button>
+                        <button id="1h" class="active">1h</button>
                         <button style="background: none; font-size: 1.2rem;">📷</button>
                         <button style="background: none; font-size: 1.2rem;">⚙️</button>
                     </div>
@@ -259,40 +259,83 @@
         </main>
     </div>
     <script>
-        // Mock data for the chart
-        const chartData = {
-            labels: ['27', '28', '29', '30', '31', 'Sep'],
-            datasets: [{
-                label: 'ICP Price',
-                data: [3.65, 3.70, 3.60, 3.55, 3.50, 3.45],
-                borderColor: '#22C55E',
-                tension: 0.1
-            }]
+        let chart;
+        const timeframes = {
+            '1m': { label: '1 Minute', data: generateMockData(60) },
+            '30m': { label: '30 Minutes', data: generateMockData(30) },
+            '1h': { label: '1 Hour', data: generateMockData(24) }
         };
 
-        // Initialize the chart
-        const ctx = document.getElementById('chart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        ticks: { color: '#6B7280' },
-                        grid: { color: '#374151' }
-                    },
-                    x: {
-                        ticks: { color: '#6B7280' },
-                        grid: { color: '#374151' }
-                    }
-                },
-                plugins: {
-                    legend: { display: false }
-                }
+        function generateMockData(count) {
+            const data = [];
+            let price = 3.45;
+            for (let i = 0; i < count; i++) {
+                price += (Math.random() - 0.5) * 0.1;
+                data.push(price);
             }
+            return data;
+        }
+
+        function updateChart(timeframe) {
+            const chartData = {
+                labels: Array.from({length: timeframes[timeframe].data.length}, (_, i) => i + 1),
+                datasets: [{
+                    label: `ICP Price (${timeframes[timeframe].label})`,
+                    data: timeframes[timeframe].data,
+                    borderColor: '#22C55E',
+                    tension: 0.1
+                }]
+            };
+
+            if (chart) {
+                chart.data = chartData;
+                chart.update();
+            } else {
+                const ctx = document.getElementById('chart').getContext('2d');
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                ticks: { color: '#6B7280' },
+                                grid: { color: '#374151' }
+                            },
+                            x: {
+                                ticks: { color: '#6B7280' },
+                                grid: { color: '#374151' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        }
+
+        function setActiveTimeframe(timeframe) {
+            document.querySelectorAll('.timeframe-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(timeframe).classList.add('active');
+            document.getElementById('current-timeframe').textContent = timeframe;
+        }
+
+        document.querySelectorAll('.timeframe-buttons button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const timeframe = this.id;
+                if (timeframes[timeframe]) {
+                    updateChart(timeframe);
+                    setActiveTimeframe(timeframe);
+                }
+            });
         });
+
+        // Initialize with 1h timeframe
+        updateChart('1h');
 
         // Populate order book
         const orderBookData = [
