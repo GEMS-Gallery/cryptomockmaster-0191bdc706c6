@@ -1,13 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Trading Mockup</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <span style="font-weight: bold;">Exchange UI (Cursor + v0)</span>
+                <span style="margin-left: 1rem;">ICPUSD ▼</span>
+            </div>
+            <button class="select-wallet">Select Wallet</button>
+        </header>
+        <main>
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div>
+                        <span style="color: #34D399;">•</span>
+                        <span style="font-weight: bold;">ICP / TetherUS : 1h : Binance</span>
+                        <span style="margin-left: 0.5rem;">O 3.4507 H 3.4507 L 3.3333 C 3.3362 -0.0045 (-0.34%)</span>
+                    </div>
+                    <div class="timeframe-buttons">
+                        <button>1m</button>
+                        <button>30m</button>
+                        <button class="active">1h</button>
+                        <button style="background: none; font-size: 1.2rem;">📷</button>
+                        <button style="background: none; font-size: 1.2rem;">⚙️</button>
+                    </div>
+                </div>
+                <canvas id="chart"></canvas>
+            </div>
+            <div class="trading-panel">
+                <div class="order-book">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-weight: bold;">Order Book</span>
+                        <span style="color: #6B7280;">Recent Trades</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Price(USDT)</th>
+                                <th style="text-align: right;">Qty(ICP)</th>
+                                <th style="text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderBookBody"></tbody>
+                    </table>
+                </div>
+                <div class="trade-section">
+                    <h3 style="margin-top: 0;">Trade</h3>
+                    <div class="trade-type">
+                        <button class="active">Cross</button>
+                        <button>10.00x</button>
+                    </div>
+                    <div class="leverage">
+                        <button>Limit</button>
+                        <button class="active">Market</button>
+                    </div>
+                    <input type="number" placeholder="0.00">
+                    <div class="percentage-buttons">
+                        <button>10%</button>
+                        <button>25%</button>
+                        <button>50%</button>
+                        <button>75%</button>
+                    </div>
+                    <div style="font-size: 0.75rem; margin-bottom: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Value</span>
+                            <span>-- / -- USDT</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Cost</span>
+                            <span>-- / -- USDT</span>
+                        </div>
+                    </div>
+                    <div class="buy-sell-buttons">
+                        <button class="buy-button">Buy</button>
+                        <button class="sell-button">Sell</button>
+                    </div>
+                    <div class="balance-info">
+                        <div>
+                            <span>Initial Margin</span>
+                            <span style="color: #34D399;">25.00%</span>
+                        </div>
+                        <div>
+                            <span>Maintenance Margin</span>
+                            <span style="color: #34D399;">25.00%</span>
+                        </div>
+                        <div>
+                            <span>Margin Balance</span>
+                            <span>1,030.4007 USDT</span>
+                        </div>
+                        <div>
+                            <span>Available Balance</span>
+                            <span>1,030.4007 USDT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Mock data for the chart
+        const chartData = {
+            labels: ['27', '28', '29', '30', '31', 'Sep'],
+            datasets: [{
+                label: 'ICP Price',
+                data: [3.65, 3.70, 3.60, 3.55, 3.50, 3.45],
+                borderColor: '#22C55E',
+                tension: 0.1
+            }]
+        };
+
+        // Initialize the chart
+        const ctx = document.getElementById('chart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        ticks: { color: '#6B7280' },
+                        grid: { color: '#374151' }
+                    },
+                    x: {
+                        ticks: { color: '#6B7280' },
+                        grid: { color: '#374151' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Populate order book
+        const orderBookData = [
+            { price: 3.62, qty: 1000.00, total: 3620.00 },
+            { price: 3.61, qty: 1000.00, total: 3610.00 },
+            { price: 3.60, qty: 1000.00, total: 3600.00 },
+            { price: 3.59, qty: 1000.00, total: 3590.00 },
+            { price: 3.58, qty: 1000.00, total: 3580.00 },
+            { price: 3.57, qty: 1000.00, total: 3570.00 },
+            { price: 3.56, qty: 1000.00, total: 3560.00 },
+            { price: 3.55, qty: 1000.00, total: 3550.00 }
+        ];
+
+        const orderBookBody = document.getElementById('orderBookBody');
+        orderBookData.forEach((order, index) => {
+            const row = orderBookBody.insertRow();
+            row.innerHTML = `
+                <td class="${index < 4 ? 'sell' : 'buy'}">${order.price.toFixed(2)}</td>
+                <td style="text-align: right;">${order.qty.toFixed(2)}</td>
+                <td style="text-align: right;">${order.total.toFixed(2)}</td>
+            `;
+        });
+    </script>
+</body>
 </html>
