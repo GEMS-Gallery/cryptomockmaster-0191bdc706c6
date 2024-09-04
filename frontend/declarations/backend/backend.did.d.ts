@@ -5,6 +5,7 @@ import type { IDL } from '@dfinity/candid';
 export type Result = { 'ok' : string } |
   { 'err' : string };
 export interface _SERVICE {
+  'fetchBinanceOrderbook' : ActorMethod<[], string>,
   'getOrderBook' : ActorMethod<
     [],
     { 'asks' : Array<[number, number]>, 'bids' : Array<[number, number]> }

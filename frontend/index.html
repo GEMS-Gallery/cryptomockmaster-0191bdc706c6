@@ -263,8 +263,6 @@
         let chart;
         const API_BASE_URL = 'https://api.coingecko.com/api/v3';
         const ICP_ID = 'internet-computer';
-        const BINANCE_API_URL = 'https://api.binance.com/api/v3';
-        const SYMBOL = 'ICPUSDT';
 
         async function fetchICPPrice(vsCurrency = 'usd') {
             const url = `${API_BASE_URL}/simple/price?ids=${ICP_ID}&vs_currencies=${vsCurrency}`;
@@ -320,10 +318,9 @@
             }
         }
 
-        async function fetchOrderbook(limit = 10) {
-            const url = `${BINANCE_API_URL}/depth?symbol=${SYMBOL}&limit=${limit}`;
+        async function fetchOrderbook() {
             try {
-                const response = await fetch(url);
+                const response = await fetch('/api/fetchBinanceOrderbook');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -345,23 +342,28 @@
             asksElement.innerHTML = '';
             bidsElement.innerHTML = '';
 
-            orderbook.asks.slice().reverse().forEach(({ price, quantity }) => {
-                const row = asksElement.insertRow();
-                row.innerHTML = `
-                    <td class="sell">${price.toFixed(4)}</td>
-                    <td style="text-align: right;">${quantity.toFixed(4)}</td>
-                    <td style="text-align: right;">${(price * quantity).toFixed(2)}</td>
-                `;
-            });
+            if (orderbook && orderbook.asks && orderbook.bids) {
+                orderbook.asks.slice().reverse().forEach(({ price, quantity }) => {
+                    const row = asksElement.insertRow();
+                    row.innerHTML = `
+                        <td class="sell">${price.toFixed(4)}</td>
+                        <td style="text-align: right;">${quantity.toFixed(4)}</td>
+                        <td style="text-align: right;">${(price * quantity).toFixed(2)}</td>
+                    `;
+                });
 
-            orderbook.bids.forEach(({ price, quantity }) => {
-                const row = bidsElement.insertRow();
-                row.innerHTML = `
-                    <td class="buy">${price.toFixed(4)}</td>
-                    <td style="text-align: right;">${quantity.toFixed(4)}</td>
-                    <td style="text-align: right;">${(price * quantity).toFixed(2)}</td>
-                `;
-            });
+                orderbook.bids.forEach(({ price, quantity }) => {
+                    const row = bidsElement.insertRow();
+                    row.innerHTML = `
+                        <td class="buy">${price.toFixed(4)}</td>
+                        <td style="text-align: right;">${quantity.toFixed(4)}</td>
+                        <td style="text-align: right;">${(price * quantity).toFixed(2)}</td>
+                    `;
+                });
+            } else {
+                const errorRow = asksElement.insertRow();
+                errorRow.innerHTML = '<td colspan="3">Unable to fetch orderbook data</td>';
+            }
         }
 
         async function updateChart(days = 30) {
@@ -448,6 +450,8 @@
             const orderbook = await fetchOrderbook();
             if (orderbook) {
                 displayOrderbook(orderbook);
+            } else {
+                displayOrderbook(null); // Display error message
             }
         }
 

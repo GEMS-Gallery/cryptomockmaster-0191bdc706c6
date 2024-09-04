@@ -4,6 +4,7 @@ type Result =
    ok: text;
  };
 service : {
+  fetchBinanceOrderbook: () -> (text);
   getOrderBook: () ->
    (record {
       asks: vec record {

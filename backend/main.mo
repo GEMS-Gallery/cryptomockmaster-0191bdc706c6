@@ -1,12 +1,13 @@
 import Bool "mo:base/Bool";
 import Order "mo:base/Order";
-import Text "mo:base/Text";
 
 import Float "mo:base/Float";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Time "mo:base/Time";
 import Result "mo:base/Result";
+import Text "mo:base/Text";
+import Debug "mo:base/Debug";
 
 actor {
   // Mock data
@@ -59,5 +60,23 @@ actor {
     } else {
       #ok("Sell order placed successfully")
     }
+  };
+
+  // Mock function to simulate fetching Binance orderbook
+  public func fetchBinanceOrderbook() : async Text {
+    let mockOrderbook = {
+      bids = [
+        ["3.5000", "100.0000"],
+        ["3.4950", "150.0000"],
+        ["3.4900", "200.0000"]
+      ];
+      asks = [
+        ["3.5050", "80.0000"],
+        ["3.5100", "120.0000"],
+        ["3.5150", "160.0000"]
+      ]
+    };
+    Debug.print("Fetching mock Binance orderbook");
+    "{\"bids\":[[\"3.5000\",\"100.0000\"],[\"3.4950\",\"150.0000\"],[\"3.4900\",\"200.0000\"]],\"asks\":[[\"3.5050\",\"80.0000\"],[\"3.5100\",\"120.0000\"],[\"3.5150\",\"160.0000\"]]}"
   };
 }
