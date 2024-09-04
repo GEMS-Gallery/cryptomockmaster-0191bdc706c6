@@ -247,3 +247,40 @@ input[type="number"] {
 .user-info span {
   margin-right: 10px;
 }
+
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #1F2937;
+  color: #D1D5DB;
+}
+
+.error-boundary h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.error-boundary pre {
+  background-color: #374151;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  max-width: 80%;
+  overflow-x: auto;
+}
+
+.error-boundary button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.error-boundary button:hover {
+  background-color: #2563EB;
+}
