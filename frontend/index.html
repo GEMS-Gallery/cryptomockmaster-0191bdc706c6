@@ -176,12 +176,12 @@
                     <div>
                         <span style="color: #34D399;">•</span>
                         <span style="font-weight: bold;">ICP / TetherUS : <span id="current-timeframe">1h</span> : Binance</span>
-                        <span style="margin-left: 0.5rem;">O 3.4507 H 3.4507 L 3.3333 C 3.3362 -0.0045 (-0.34%)</span>
+                        <span id="price-info" style="margin-left: 0.5rem;"></span>
                     </div>
                     <div class="timeframe-buttons">
-                        <button id="1m">1m</button>
-                        <button id="30m">30m</button>
-                        <button id="1h" class="active">1h</button>
+                        <button id="1d">1d</button>
+                        <button id="7d">7d</button>
+                        <button id="30d" class="active">30d</button>
                         <button id="screenshot-btn" style="background: none; font-size: 1.2rem;">📷</button>
                         <button style="background: none; font-size: 1.2rem;">⚙️</button>
                     </div>
@@ -260,28 +260,72 @@
     </div>
     <script>
         let chart;
-        const timeframes = {
-            '1m': { label: '1 Minute', data: generateMockData(60) },
-            '30m': { label: '30 Minutes', data: generateMockData(30) },
-            '1h': { label: '1 Hour', data: generateMockData(24) }
-        };
+        const API_BASE_URL = 'https://api.coingecko.com/api/v3';
+        const ICP_ID = 'internet-computer';
 
-        function generateMockData(count) {
-            const data = [];
-            let price = 3.45;
-            for (let i = 0; i < count; i++) {
-                price += (Math.random() - 0.5) * 0.1;
-                data.push(price);
+        async function fetchICPPrice(vsCurrency = 'usd') {
+            const url = `${API_BASE_URL}/simple/price?ids=${ICP_ID}&vs_currencies=${vsCurrency}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return data[ICP_ID][vsCurrency];
+            } catch (error) {
+                console.error('Error fetching ICP price:', error);
+                return null;
             }
-            return data;
         }
 
-        function updateChart(timeframe) {
+        async function fetchICPData() {
+            const url = `${API_BASE_URL}/coins/${ICP_ID}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return {
+                    currentPrice: data.market_data.current_price.usd,
+                    marketCap: data.market_data.market_cap.usd,
+                    volume24h: data.market_data.total_volume.usd,
+                    priceChange24h: data.market_data.price_change_percentage_24h,
+                    circulatingSupply: data.market_data.circulating_supply
+                };
+            } catch (error) {
+                console.error('Error fetching ICP data:', error);
+                return null;
+            }
+        }
+
+        async function fetchICPPriceHistory(days = 30) {
+            const url = `${API_BASE_URL}/coins/${ICP_ID}/market_chart?vs_currency=usd&days=${days}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return data.prices.map(item => ({
+                    timestamp: item[0],
+                    price: item[1]
+                }));
+            } catch (error) {
+                console.error('Error fetching ICP price history:', error);
+                return null;
+            }
+        }
+
+        async function updateChart(days = 30) {
+            const priceHistory = await fetchICPPriceHistory(days);
+            if (!priceHistory) return;
+
             const chartData = {
-                labels: Array.from({length: timeframes[timeframe].data.length}, (_, i) => i + 1),
+                labels: priceHistory.map(item => new Date(item.timestamp).toLocaleDateString()),
                 datasets: [{
-                    label: `ICP Price (${timeframes[timeframe].label})`,
-                    data: timeframes[timeframe].data,
+                    label: 'ICP Price (USD)',
+                    data: priceHistory.map(item => item.price),
                     borderColor: '#22C55E',
                     tension: 0.1
                 }]
@@ -316,6 +360,14 @@
             }
         }
 
+        async function updatePriceInfo() {
+            const icpData = await fetchICPData();
+            if (icpData) {
+                const priceInfo = document.getElementById('price-info');
+                priceInfo.textContent = `$${icpData.currentPrice.toFixed(2)} (${icpData.priceChange24h.toFixed(2)}%)`;
+            }
+        }
+
         function setActiveTimeframe(timeframe) {
             document.querySelectorAll('.timeframe-buttons button').forEach(btn => {
                 btn.classList.remove('active');
@@ -327,17 +379,30 @@
         document.querySelectorAll('.timeframe-buttons button').forEach(btn => {
             btn.addEventListener('click', function() {
                 const timeframe = this.id;
-                if (timeframes[timeframe]) {
-                    updateChart(timeframe);
+                if (['1d', '7d', '30d'].includes(timeframe)) {
+                    const days = parseInt(timeframe);
+                    updateChart(days);
                     setActiveTimeframe(timeframe);
                 }
             });
         });
 
-        // Initialize with 1h timeframe
-        updateChart('1h');
+        // Screenshot functionality
+        document.getElementById('screenshot-btn').addEventListener('click', function() {
+            const canvas = document.getElementById('chart');
+            const image = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = 'icp_chart_screenshot.png';
+            link.click();
+        });
 
-        // Populate order book
+        // Initialize with 30d timeframe and update price info
+        updateChart(30);
+        updatePriceInfo();
+        setInterval(updatePriceInfo, 60000); // Update price every minute
+
+        // Populate order book (using mock data for now)
         const orderBookData = [
             { price: 3.62, qty: 1000.00, total: 3620.00 },
             { price: 3.61, qty: 1000.00, total: 3610.00 },
@@ -357,16 +422,6 @@
                 <td style="text-align: right;">${order.qty.toFixed(2)}</td>
                 <td style="text-align: right;">${order.total.toFixed(2)}</td>
             `;
-        });
-
-        // Screenshot functionality
-        document.getElementById('screenshot-btn').addEventListener('click', function() {
-            const canvas = document.getElementById('chart');
-            const image = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = image;
-            link.download = 'chart_screenshot.png';
-            link.click();
         });
     </script>
 </body>
