@@ -52,13 +52,15 @@ actor {
   };
 
   // Simulate placing a trade (only updates UI, no actual trading)
-  public func placeTrade(isBuy : Bool, amount : Float, price : Float) : async Result.Result<Text, Text> {
+  public func placeTrade(isBuy : Bool, amount : Float, price : Float, isMarket : Bool, leverage : Float) : async Result.Result<Text, Text> {
     // In a real implementation, we would update the order book and handle the trade
     // For this mock-up, we'll just return a success message
+    let orderType = if (isMarket) { "market" } else { "limit" };
+    let leverageText = if (leverage > 1.0) { " with " # Float.toText(leverage) # "x leverage" } else { "" };
     if (isBuy) {
-      #ok("Buy order placed successfully")
+      #ok("Buy " # orderType # " order placed successfully" # leverageText)
     } else {
-      #ok("Sell order placed successfully")
+      #ok("Sell " # orderType # " order placed successfully" # leverageText)
     }
   };
 

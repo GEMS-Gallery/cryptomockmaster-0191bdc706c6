@@ -209,14 +209,14 @@
                 <div class="trade-section">
                     <h3 style="margin-top: 0;">Trade</h3>
                     <div class="trade-type">
-                        <button class="active">Cross</button>
-                        <button>10.00x</button>
+                        <button id="cross-btn" class="active">Cross</button>
+                        <button id="leverage-btn">10.00x</button>
                     </div>
                     <div class="leverage">
-                        <button>Limit</button>
-                        <button class="active">Market</button>
+                        <button id="limit-btn">Limit</button>
+                        <button id="market-btn" class="active">Market</button>
                     </div>
-                    <input type="number" placeholder="0.00">
+                    <input type="number" id="trade-amount" placeholder="0.00">
                     <div class="percentage-buttons">
                         <button>10%</button>
                         <button>25%</button>
@@ -226,16 +226,16 @@
                     <div style="font-size: 0.75rem; margin-bottom: 0.5rem;">
                         <div style="display: flex; justify-content: space-between;">
                             <span>Value</span>
-                            <span>-- / -- USDT</span>
+                            <span id="trade-value">-- / -- USDT</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Cost</span>
-                            <span>-- / -- USDT</span>
+                            <span id="trade-cost">-- / -- USDT</span>
                         </div>
                     </div>
                     <div class="buy-sell-buttons">
-                        <button class="buy-button">Buy</button>
-                        <button class="sell-button">Sell</button>
+                        <button class="buy-button" id="buy-btn">Buy</button>
+                        <button class="sell-button" id="sell-btn">Sell</button>
                     </div>
                     <div class="balance-info">
                         <div>
@@ -263,6 +263,9 @@
         let chart;
         const API_BASE_URL = 'https://api.coingecko.com/api/v3';
         const ICP_ID = 'internet-computer';
+        let currentPrice = 0;
+        let isMarketOrder = true;
+        let leverage = 1;
 
         async function fetchICPPrice(vsCurrency = 'usd') {
             const url = `${API_BASE_URL}/simple/price?ids=${ICP_ID}&vs_currencies=${vsCurrency}`;
@@ -412,6 +415,7 @@
         async function updatePriceInfo() {
             const icpData = await fetchICPData();
             if (icpData) {
+                currentPrice = icpData.currentPrice;
                 const priceInfo = document.getElementById('price-info');
                 priceInfo.textContent = `$${icpData.currentPrice.toFixed(2)} (${icpData.priceChange24h.toFixed(2)}%)`;
             }
@@ -425,6 +429,26 @@
             document.getElementById('current-timeframe').textContent = timeframe;
         }
 
+        function updateTradeInfo() {
+            const amount = parseFloat(document.getElementById('trade-amount').value) || 0;
+            const value = amount * currentPrice;
+            const cost = value / leverage;
+            document.getElementById('trade-value').textContent = `${value.toFixed(2)} USDT`;
+            document.getElementById('trade-cost').textContent = `${cost.toFixed(2)} USDT`;
+        }
+
+        async function placeTrade(isBuy) {
+            const amount = parseFloat(document.getElementById('trade-amount').value) || 0;
+            if (amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            const orderType = isMarketOrder ? 'market' : 'limit';
+            const leverageText = leverage > 1 ? ` with ${leverage}x leverage` : '';
+            const message = `${isBuy ? 'Buy' : 'Sell'} ${orderType} order placed successfully for ${amount} ICP at $${currentPrice.toFixed(2)}${leverageText}`;
+            alert(message);
+        }
+
         document.querySelectorAll('.timeframe-buttons button').forEach(btn => {
             btn.addEventListener('click', function() {
                 const timeframe = this.id;
@@ -435,6 +459,37 @@
                 }
             });
         });
+
+        document.getElementById('cross-btn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('leverage-btn').classList.remove('active');
+            leverage = 1;
+            updateTradeInfo();
+        });
+
+        document.getElementById('leverage-btn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('cross-btn').classList.remove('active');
+            leverage = 10;
+            updateTradeInfo();
+        });
+
+        document.getElementById('limit-btn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('market-btn').classList.remove('active');
+            isMarketOrder = false;
+        });
+
+        document.getElementById('market-btn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('limit-btn').classList.remove('active');
+            isMarketOrder = true;
+        });
+
+        document.getElementById('trade-amount').addEventListener('input', updateTradeInfo);
+
+        document.getElementById('buy-btn').addEventListener('click', () => placeTrade(true));
+        document.getElementById('sell-btn').addEventListener('click', () => placeTrade(false));
 
         // Screenshot functionality
         document.getElementById('screenshot-btn').addEventListener('click', function() {

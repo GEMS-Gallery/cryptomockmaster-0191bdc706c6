@@ -11,7 +11,10 @@ export interface _SERVICE {
     { 'asks' : Array<[number, number]>, 'bids' : Array<[number, number]> }
   >,
   'getPriceData' : ActorMethod<[], Array<[number, number]>>,
-  'placeTrade' : ActorMethod<[boolean, number, number], Result>,
+  'placeTrade' : ActorMethod<
+    [boolean, number, number, boolean, number],
+    Result
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

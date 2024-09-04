@@ -17,7 +17,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(IDL.Tuple(IDL.Float64, IDL.Float64))],
         ['query'],
       ),
-    'placeTrade' : IDL.Func([IDL.Bool, IDL.Float64, IDL.Float64], [Result], []),
+    'placeTrade' : IDL.Func(
+        [IDL.Bool, IDL.Float64, IDL.Float64, IDL.Bool, IDL.Float64],
+        [Result],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

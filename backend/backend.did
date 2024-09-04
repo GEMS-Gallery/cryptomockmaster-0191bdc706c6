@@ -20,5 +20,5 @@ service : {
                              float64;
                              float64;
                            }) query;
-  placeTrade: (bool, float64, float64) -> (Result);
+  placeTrade: (bool, float64, float64, bool, float64) -> (Result);
 }
