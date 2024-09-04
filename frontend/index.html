@@ -166,7 +166,7 @@
         <header>
             <div>
                 <span style="font-weight: bold;">Exchange UI (Cursor + v0)</span>
-                <span style="margin-left: 1rem;">ICPUSD ▼</span>
+                <span style="margin-left: 1rem;">ICPUSDT ▼</span>
             </div>
             <button class="select-wallet">Select Wallet</button>
         </header>
@@ -192,17 +192,18 @@
                 <div class="order-book">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span style="font-weight: bold;">Order Book</span>
-                        <span style="color: #6B7280;">Recent Trades</span>
+                        <span style="color: #6B7280;">ICPUSDT</span>
                     </div>
                     <table>
                         <thead>
                             <tr>
                                 <th>Price(USDT)</th>
-                                <th style="text-align: right;">Qty(ICP)</th>
+                                <th style="text-align: right;">Amount(ICP)</th>
                                 <th style="text-align: right;">Total</th>
                             </tr>
                         </thead>
-                        <tbody id="orderBookBody"></tbody>
+                        <tbody id="asks"></tbody>
+                        <tbody id="bids"></tbody>
                     </table>
                 </div>
                 <div class="trade-section">
@@ -262,6 +263,8 @@
         let chart;
         const API_BASE_URL = 'https://api.coingecko.com/api/v3';
         const ICP_ID = 'internet-computer';
+        const BINANCE_API_URL = 'https://api.binance.com/api/v3';
+        const SYMBOL = 'ICPUSDT';
 
         async function fetchICPPrice(vsCurrency = 'usd') {
             const url = `${API_BASE_URL}/simple/price?ids=${ICP_ID}&vs_currencies=${vsCurrency}`;
@@ -315,6 +318,50 @@
                 console.error('Error fetching ICP price history:', error);
                 return null;
             }
+        }
+
+        async function fetchOrderbook(limit = 10) {
+            const url = `${BINANCE_API_URL}/depth?symbol=${SYMBOL}&limit=${limit}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return {
+                    bids: data.bids.map(([price, quantity]) => ({ price: parseFloat(price), quantity: parseFloat(quantity) })),
+                    asks: data.asks.map(([price, quantity]) => ({ price: parseFloat(price), quantity: parseFloat(quantity) }))
+                };
+            } catch (error) {
+                console.error('Error fetching orderbook:', error);
+                return null;
+            }
+        }
+
+        function displayOrderbook(orderbook) {
+            const asksElement = document.getElementById('asks');
+            const bidsElement = document.getElementById('bids');
+
+            asksElement.innerHTML = '';
+            bidsElement.innerHTML = '';
+
+            orderbook.asks.slice().reverse().forEach(({ price, quantity }) => {
+                const row = asksElement.insertRow();
+                row.innerHTML = `
+                    <td class="sell">${price.toFixed(4)}</td>
+                    <td style="text-align: right;">${quantity.toFixed(4)}</td>
+                    <td style="text-align: right;">${(price * quantity).toFixed(2)}</td>
+                `;
+            });
+
+            orderbook.bids.forEach(({ price, quantity }) => {
+                const row = bidsElement.insertRow();
+                row.innerHTML = `
+                    <td class="buy">${price.toFixed(4)}</td>
+                    <td style="text-align: right;">${quantity.toFixed(4)}</td>
+                    <td style="text-align: right;">${(price * quantity).toFixed(2)}</td>
+                `;
+            });
         }
 
         async function updateChart(days = 30) {
@@ -397,32 +444,21 @@
             link.click();
         });
 
-        // Initialize with 30d timeframe and update price info
+        async function updateOrderbook() {
+            const orderbook = await fetchOrderbook();
+            if (orderbook) {
+                displayOrderbook(orderbook);
+            }
+        }
+
+        // Initialize with 30d timeframe, update price info and orderbook
         updateChart(30);
         updatePriceInfo();
+        updateOrderbook();
+
+        // Set up periodic updates
         setInterval(updatePriceInfo, 60000); // Update price every minute
-
-        // Populate order book (using mock data for now)
-        const orderBookData = [
-            { price: 3.62, qty: 1000.00, total: 3620.00 },
-            { price: 3.61, qty: 1000.00, total: 3610.00 },
-            { price: 3.60, qty: 1000.00, total: 3600.00 },
-            { price: 3.59, qty: 1000.00, total: 3590.00 },
-            { price: 3.58, qty: 1000.00, total: 3580.00 },
-            { price: 3.57, qty: 1000.00, total: 3570.00 },
-            { price: 3.56, qty: 1000.00, total: 3560.00 },
-            { price: 3.55, qty: 1000.00, total: 3550.00 }
-        ];
-
-        const orderBookBody = document.getElementById('orderBookBody');
-        orderBookData.forEach((order, index) => {
-            const row = orderBookBody.insertRow();
-            row.innerHTML = `
-                <td class="${index < 4 ? 'sell' : 'buy'}">${order.price.toFixed(2)}</td>
-                <td style="text-align: right;">${order.qty.toFixed(2)}</td>
-                <td style="text-align: right;">${order.total.toFixed(2)}</td>
-            `;
-        });
+        setInterval(updateOrderbook, 5000); // Update orderbook every 5 seconds
     </script>
 </body>
 </html>
