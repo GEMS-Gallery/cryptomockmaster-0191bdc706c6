@@ -182,7 +182,7 @@
                         <button id="1m">1m</button>
                         <button id="30m">30m</button>
                         <button id="1h" class="active">1h</button>
-                        <button style="background: none; font-size: 1.2rem;">📷</button>
+                        <button id="screenshot-btn" style="background: none; font-size: 1.2rem;">📷</button>
                         <button style="background: none; font-size: 1.2rem;">⚙️</button>
                     </div>
                 </div>
@@ -357,6 +357,16 @@
                 <td style="text-align: right;">${order.qty.toFixed(2)}</td>
                 <td style="text-align: right;">${order.total.toFixed(2)}</td>
             `;
+        });
+
+        // Screenshot functionality
+        document.getElementById('screenshot-btn').addEventListener('click', function() {
+            const canvas = document.getElementById('chart');
+            const image = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = 'chart_screenshot.png';
+            link.click();
         });
     </script>
 </body>
